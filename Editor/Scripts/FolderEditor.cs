@@ -1,19 +1,23 @@
-using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 
+using UnityEngine;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 
 namespace Zlitz.General.ProductiveKit
 {
     [CustomEditor(typeof(DefaultAsset))]
     public class FolderEditor : Editor
     {
-        private SerializedObject m_serializedIconAsset;
+        [SerializeField]
+        private Texture2D m_defaultFolderIcon;
 
-        private PropertyField m_iconAssetFolderIconProperty;
-        private PropertyField m_iconAssetTintColorProperty;
+        private AssetImporter m_folderImporter;
+
+        private Texture2D m_folderIcon;
+        private Color     m_tintColor;
 
         public override VisualElement CreateInspectorGUI()
         {
@@ -25,67 +29,119 @@ namespace Zlitz.General.ProductiveKit
                 return root;
             }
 
-            VisualElement inlineIconAssetEditor = new VisualElement();
+            m_folderImporter = AssetImporter.GetAtPath(assetPath);
 
-            m_iconAssetFolderIconProperty = new PropertyField();
-            inlineIconAssetEditor.Add(m_iconAssetFolderIconProperty);
+            string folderIconGuid;
+            (folderIconGuid, m_tintColor) = GetOrDefault(assetPath, m_defaultFolderIcon);
+            m_folderIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(folderIconGuid));
 
-            m_iconAssetTintColorProperty = new PropertyField();
-            inlineIconAssetEditor.Add(m_iconAssetTintColorProperty);
+            ObjectField folderIconField = new ObjectField("Folder Icon");
+            folderIconField.objectType = typeof(Texture2D);
+            folderIconField.value = m_folderIcon;
+            root.Add(folderIconField);
 
-            inlineIconAssetEditor.style.display = DisplayStyle.None;
-            root.Add(inlineIconAssetEditor);
+            ColorField tintColorField = new ColorField("Tint Color");
+            tintColorField.showAlpha = false;
+            tintColorField.value = m_tintColor;
+            root.Add(tintColorField);
 
-            Button addIconAssetButton = new Button();
-            addIconAssetButton.text = "Add Folder Icon";
-            addIconAssetButton.SetEnabled(assetPath.StartsWith("Assets/"));
-            addIconAssetButton.clicked += () =>
+            folderIconField.RegisterValueChangedCallback(e =>
             {
-                FolderIconAsset iconAsset = CreateInstance<FolderIconAsset>();
-                iconAsset.name = "FolderIconAsset";
-
-                string iconAssetPath = Path.Combine(assetPath, iconAsset.name + ".asset");
-                AssetDatabase.CreateAsset(iconAsset, iconAssetPath);
-                AssetDatabase.SaveAssets();
-
-                m_serializedIconAsset = new SerializedObject(iconAsset);
-
-                SerializedProperty folderIconProperty = m_serializedIconAsset.FindProperty("m_folderIcon");
-                m_iconAssetFolderIconProperty.BindProperty(folderIconProperty);
-
-                SerializedProperty tintColorProperty = m_serializedIconAsset.FindProperty("m_tintColor");
-                m_iconAssetTintColorProperty.BindProperty(tintColorProperty);
-
-                inlineIconAssetEditor.style.display = DisplayStyle.Flex;
-                addIconAssetButton.style.display = DisplayStyle.None;
-            };
-            addIconAssetButton.style.display = DisplayStyle.Flex;
-            root.Add(addIconAssetButton);
-
-            string[] folderIconAssetGuids = AssetDatabase.FindAssets("t:FolderIconAsset", new string[] { assetPath });
-            folderIconAssetGuids = folderIconAssetGuids.Where(id => Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(id)).Replace("\\", "/") == assetPath).ToArray();
-
-            if (folderIconAssetGuids.Length > 0)
-            {
-                string folderIconAssetPath = AssetDatabase.GUIDToAssetPath(folderIconAssetGuids[0]);
-
-                FolderIconAsset folderIconAsset = AssetDatabase.LoadAssetAtPath<FolderIconAsset>(folderIconAssetPath);
-                if (folderIconAsset != null)
+                if (e.newValue is Texture2D folderIcon)
                 {
-                    m_serializedIconAsset = new SerializedObject(folderIconAsset);
-
-                    SerializedProperty folderIconProperty = m_serializedIconAsset.FindProperty("m_folderIcon");
-                    m_iconAssetFolderIconProperty.BindProperty(folderIconProperty);
-
-                    SerializedProperty tintColorProperty = m_serializedIconAsset.FindProperty("m_tintColor");
-                    m_iconAssetTintColorProperty.BindProperty(tintColorProperty);
+                    m_folderIcon = folderIcon;
+                    Set(assetPath, AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(m_folderIcon)).ToString(), m_tintColor);
                 }
+            });
 
-                inlineIconAssetEditor.style.display = DisplayStyle.Flex;
-                addIconAssetButton.style.display = DisplayStyle.None;
-            }
+            tintColorField.RegisterValueChangedCallback(e =>
+            {
+                m_tintColor = e.newValue;
+                Set(assetPath, AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(m_folderIcon)).ToString(), m_tintColor);
+            });
 
             return root;
         }
+
+        protected override void OnHeaderGUI()
+        {
+            Color guiColor = GUI.contentColor;
+            GUI.contentColor = new Color(guiColor.r * m_tintColor.r, guiColor.g * m_tintColor.g, guiColor.b * m_tintColor.b, guiColor.a);
+
+            base.OnHeaderGUI();
+
+            GUI.contentColor = guiColor;
+        }
+
+        private (string, Color) Get(string assetPath)
+        {
+            string[] entries = m_folderImporter.userData.Split('|');
+
+            foreach (string entry in entries)
+            {
+                FolderIconData folderIconData = JsonUtility.FromJson<FolderIconData>(entry);
+                if (folderIconData != null)
+                {
+                    return (folderIconData.folderIconGuid, folderIconData.tintColor);
+                }
+            }
+
+            return (null, Color.white);
+        }
+
+        private (string, Color) GetOrDefault(string assetPath, Texture2D defaultFolderIcon)
+        {
+            List<string> entries = m_folderImporter.userData.Split('|').ToList();
+
+            foreach (string entry in entries)
+            {
+                FolderIconData folderIconData = JsonUtility.FromJson<FolderIconData>(entry);
+                if (folderIconData != null)
+                {
+                    return (folderIconData.folderIconGuid, folderIconData.tintColor);
+                }
+            }
+
+            string defaultFolderIconGuid = AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(defaultFolderIcon)).ToString();
+
+            entries.Add(JsonUtility.ToJson(new FolderIconData()
+            {
+                folderIconGuid = defaultFolderIconGuid,
+                tintColor      = Color.white
+            }));
+
+            m_folderImporter.userData = string.Join("|", entries);
+
+            return (defaultFolderIconGuid, Color.white);
+        }
+
+        private void Set(string assetPath, string folderIconGuid, Color tintColor)
+        {
+            List<string> entries = m_folderImporter.userData.Split('|').ToList();
+
+            for (int index =  0; index < entries.Count; index++)
+            {
+                string entry = entries[index];
+                FolderIconData folderIconData = JsonUtility.FromJson<FolderIconData>(entry);
+                if (folderIconData != null)
+                {
+                    folderIconData.folderIconGuid = folderIconGuid;
+                    folderIconData.tintColor      = tintColor;
+                    entry = JsonUtility.ToJson(folderIconData);
+                    entries[index] = entry;
+
+                    m_folderImporter.userData = string.Join("|", entries);
+                    return;
+                }
+            }
+
+            entries.Add(JsonUtility.ToJson(new FolderIconData()
+            {
+                folderIconGuid = folderIconGuid,
+                tintColor      = tintColor
+            }));
+
+            m_folderImporter.userData = string.Join("|", entries);
+        } 
     }
 }

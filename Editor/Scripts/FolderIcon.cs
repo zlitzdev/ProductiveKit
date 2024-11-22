@@ -1,6 +1,3 @@
-using System.IO;
-using System.Linq;
-
 using UnityEngine;
 using UnityEditor;
 
@@ -17,31 +14,35 @@ namespace Zlitz.General.ProductiveKit
         private static void OnProjectWindowItemGUI(string guid, Rect selectionRect)
         {
             string assetPath = AssetDatabase.GUIDToAssetPath(guid);
-            if (AssetDatabase.IsValidFolder(assetPath))
+            if (AssetDatabase.IsValidFolder(assetPath) && GetFolderIcon(assetPath, out Texture2D folderIcon, out Color tintColor))
             {
-                string[] folderIconAssetGuids = AssetDatabase.FindAssets("t:FolderIconAsset", new string[] { assetPath });
-                folderIconAssetGuids = folderIconAssetGuids.Where(id => Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(id)).Replace("\\", "/") == assetPath).ToArray();
-            
-                if (folderIconAssetGuids.Length > 0)
-                {
-                    string folderIconAssetPath = AssetDatabase.GUIDToAssetPath(folderIconAssetGuids[0]);
-
-                    if (folderIconAssetGuids.Length > 1)
-                    {
-                        Debug.LogWarning($"Folder {assetPath} contains multiple FolderIconAsset. Using {folderIconAssetPath} and ignored the rest.");
-                    }
-
-                    FolderIconAsset folderIconAsset = AssetDatabase.LoadAssetAtPath<FolderIconAsset>(folderIconAssetPath);
-
-                    if (folderIconAsset != null)
-                    {
-                        DrawFolderIcon(selectionRect, folderIconAsset);
-                    }
-                }
+                DrawFolderIcon(selectionRect, folderIcon, tintColor);
             }
         }
     
-        private static void DrawFolderIcon(Rect rect, FolderIconAsset folderIconAsset)
+        private static bool GetFolderIcon(string path, out Texture2D folderIcon, out Color tintColor)
+        {
+            folderIcon = null;
+            tintColor  = Color.white;
+
+            AssetImporter folderImporter = AssetImporter.GetAtPath(path);
+            string[] entries = folderImporter.userData.Split('|');
+
+            foreach (string entry in entries)
+            {
+                FolderIconData folderIconData = JsonUtility.FromJson<FolderIconData>(entry);
+                if (folderIconData != null)
+                {
+                    folderIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(folderIconData.folderIconGuid));
+                    tintColor = folderIconData.tintColor;
+                    break;
+                }
+            }
+
+            return folderIcon != null;
+        }
+
+        private static void DrawFolderIcon(Rect rect, Texture2D folderIcon, Color tintColor)
         {
             bool isTreeView = rect.width > rect.height;
 
@@ -67,12 +68,12 @@ namespace Zlitz.General.ProductiveKit
                 rect.height -= 14.0f;
             }
 
-            Texture2D iconTexture = folderIconAsset.folderIcon;
-            if (iconTexture != null)
+            if (folderIcon != null)
             {
-                GUI.color = folderIconAsset.tintColor;
-                GUI.DrawTexture(new Rect(rect.x, rect.y, rect.height, rect.height), iconTexture);
-                GUI.color = Color.white;
+                Color guiColor = GUI.color;
+                GUI.color = new Color(guiColor.r * tintColor.r, guiColor.g * tintColor.g, guiColor.b * tintColor.b, guiColor.a);
+                GUI.DrawTexture(new Rect(rect.x, rect.y, rect.height, rect.height), folderIcon);
+                GUI.color = guiColor;
             }
         }
     }

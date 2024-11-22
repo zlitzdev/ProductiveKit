@@ -1,0 +1,20 @@
+{
+	"name": "com.zlitz.productivekit",
+	"displayName": "Zlitz's Productive Kit",
+	"author": "ZlitzGames",
+	"version": "1.0.0",
+	"unity": "2022.3",
+	"description": "Add some features that help with project management.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/zlitzdev/ProductiveKit.git"
+	},
+	"keywords": [
+		"utility",
+		"productive",
+		"boost"
+	],
+	"samples": [
+	]
+}

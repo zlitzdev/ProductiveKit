@@ -26,11 +26,13 @@ namespace Zlitz.General.ProductiveKit
             m_folderIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(folderIconGuid));
 
             ObjectField folderIconField = new ObjectField("Folder Icon");
+            folderIconField.AddToClassList("unity-base-field__aligned");
             folderIconField.objectType = typeof(Texture2D);
             folderIconField.value = m_folderIcon;
             root.Add(folderIconField);
 
             ColorField tintColorField = new ColorField("Tint Color");
+            tintColorField.AddToClassList("unity-base-field__aligned");
             tintColorField.showAlpha = false;
             tintColorField.value = m_tintColor;
             root.Add(tintColorField);

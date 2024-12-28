@@ -26,7 +26,8 @@ namespace Zlitz.General.ProductiveKit
 
         public static void Open(Action<Color> callback, Color newColor, bool newColorShowAlpha, bool newColorHdr)
         {
-            ColorPalettePickerWindow window = GetWindow<ColorPalettePickerWindow>("Color Palette");
+            ColorPalettePickerWindow window = CreateInstance<ColorPalettePickerWindow>();
+            window.titleContent = new GUIContent("Color Palette");
             window.m_callback = callback;
             window.m_newColor = newColor;
             window.m_newColorShowAlpha = newColorShowAlpha;
@@ -34,7 +35,12 @@ namespace Zlitz.General.ProductiveKit
 
             Vector2 mousePosition = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
 
-            Rect newPosition = new Rect(mousePosition.x, mousePosition.y, 320.0f, 480.0f);
+            window.ShowUtility();
+
+            Rect newPosition = new Rect(mousePosition.x - 480.0f, mousePosition.y, 480.0f, 480.0f);
+            newPosition.x = Mathf.Max(newPosition.x, 0.0f);
+            newPosition.y = Mathf.Max(newPosition.y, 0.0f);
+
             window.position = newPosition;
         }
 
@@ -50,7 +56,10 @@ namespace Zlitz.General.ProductiveKit
 
         private void OnLostFocus()
         {
-            Close();
+            if (this != null)
+            {
+                Close();
+            }
         }
 
         private void CreateGUI()
@@ -71,11 +80,26 @@ namespace Zlitz.General.ProductiveKit
             contentContainer.style.marginRight = 8.0f;
             scrollView.Add(contentContainer);
 
+            VisualElement colorsLabelContainer = new VisualElement();
+            colorsLabelContainer.style.flexDirection = FlexDirection.Row;
+            contentContainer.Add(colorsLabelContainer);
+
             Label colorsLabel = new Label("Colors");
             colorsLabel.style.marginTop = 8.0f;
             colorsLabel.style.marginBottom = 8.0f;
             colorsLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            contentContainer.Add(colorsLabel);
+            colorsLabel.style.flexGrow = 1.0f;
+            colorsLabelContainer.Add(colorsLabel);
+
+            Button edit = new Button(() =>
+            {
+                SettingsService.OpenProjectSettings("Project/Zlitz/Productive Kit");
+            });
+            edit.text = "Edit";
+            edit.style.height = 20.0f;
+            edit.style.marginTop = 8.0f;
+            edit.style.width = 48.0f;
+            colorsLabelContainer.Add(edit);
 
             m_colorsContainer = new VisualElement();
             m_colorsContainer.style.marginLeft = 4.0f;
@@ -166,7 +190,7 @@ namespace Zlitz.General.ProductiveKit
             TextField label = new TextField();
             label.label = "";
             label.value = nameProperty.stringValue;
-            label.SetEnabled(false);
+            label.isReadOnly = true;
             labelContainer.Add(label);
 
             VisualElement colorContainer = new VisualElement();
@@ -182,8 +206,13 @@ namespace Zlitz.General.ProductiveKit
             color.hdr = hdr;
             color.showEyeDropper = false;
             color.style.flexGrow = 1.0f;
-            color.SetEnabled(false);
             colorContainer.Add(color);
+
+            VisualElement colorBlocker = new VisualElement();
+            colorBlocker.style.position = Position.Absolute;
+            colorBlocker.style.width = Length.Percent(100.0f);
+            colorBlocker.style.height = Length.Percent(100.0f);
+            color.Add(colorBlocker);
 
             Button select = new Button(() =>
             {
@@ -229,8 +258,13 @@ namespace Zlitz.General.ProductiveKit
             color.hdr = m_newColorHdr;
             color.showEyeDropper = false;
             color.style.flexGrow = 1.0f;
-            color.SetEnabled(false);
             colorContainer.Add(color);
+
+            VisualElement colorBlocker = new VisualElement();
+            colorBlocker.style.position = Position.Absolute;
+            colorBlocker.style.width = Length.Percent(100.0f);
+            colorBlocker.style.height = Length.Percent(100.0f);
+            color.Add(colorBlocker);
 
             Button add = new Button(() =>
             {
@@ -266,6 +300,23 @@ namespace Zlitz.General.ProductiveKit
             add.style.width = Length.Percent(20.0f);
             add.style.height = Length.Percent(100.0f);
             root.Add(add);
+
+            label.schedule.Execute(() =>
+            {
+                bool conflicted = false;
+                for (int i = 0; i < m_entriesProperty.arraySize; i++)
+                {
+                    SerializedProperty entryProperty = m_entriesProperty.GetArrayElementAtIndex(i);
+                    SerializedProperty nameProperty = entryProperty.FindPropertyRelative("m_name");
+
+                    if (label.value == nameProperty.stringValue)
+                    {
+                        conflicted = true;
+                        break;
+                    }
+                }
+                add.SetEnabled(!conflicted);
+            }).Every(100);
 
             m_newColorField = color;
 

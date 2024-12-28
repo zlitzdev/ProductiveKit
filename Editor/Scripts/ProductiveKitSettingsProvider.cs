@@ -57,10 +57,34 @@ namespace Zlitz.General.ProductiveKit
             colorContent.style.marginLeft = 10.0f;
             settingContent.Add(colorContent); ;
 
+            VisualElement colorPaletteContainer = new VisualElement();
+            colorPaletteContainer.style.flexDirection = FlexDirection.Row;
+            colorContent.Add(colorPaletteContainer);
+
             PropertyField colorsField = new PropertyField();
             colorsField.label = "Colors";
+            colorsField.style.flexGrow = 1.0f;
             colorsField.BindProperty(m_colorsProperty);
-            colorContent.Add(colorsField);
+            colorPaletteContainer.Add(colorsField);
+
+            Button createNewPaletteButton = new Button(() =>
+            {
+                string path = EditorUtility.SaveFilePanelInProject("Create new color palette", "Color Palette", "asset", "Select a path to save new color palette");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    ColorPaletteAsset newColorPalette = ScriptableObject.CreateInstance<ColorPaletteAsset>();
+                    
+                    AssetDatabase.CreateAsset(newColorPalette, path);
+                    AssetDatabase.SaveAssets();
+
+                    m_colorsProperty.objectReferenceValue = newColorPalette;
+                    m_serializedSettings.ApplyModifiedProperties();
+                }
+            });
+            createNewPaletteButton.text = "Create";
+            createNewPaletteButton.style.width = 72.0f;
+            createNewPaletteButton.SetEnabled(m_colorsProperty.objectReferenceValue == null);
+            colorPaletteContainer.Add(createNewPaletteButton);
 
             VisualElement inlineColorEditorContainer = new VisualElement();
 
@@ -98,6 +122,8 @@ namespace Zlitz.General.ProductiveKit
                         }
                     }
                 }
+
+                createNewPaletteButton.SetEnabled(m_colorsProperty.objectReferenceValue == null);
             });
         }
 

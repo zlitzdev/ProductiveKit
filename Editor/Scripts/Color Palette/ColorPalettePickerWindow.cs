@@ -120,7 +120,6 @@ namespace Zlitz.General.ProductiveKit
             newColorContainer.Add(MakeNewColorAdder());
 
             Rebuild();
-            m_colorsContainer.schedule.Execute(Rebuild).Every(1000);
         }
 
         private void Rebuild()
@@ -191,6 +190,7 @@ namespace Zlitz.General.ProductiveKit
             label.label = "";
             label.value = nameProperty.stringValue;
             label.isReadOnly = true;
+            label.style.height = EditorGUIUtility.singleLineHeight;
             labelContainer.Add(label);
 
             VisualElement colorContainer = new VisualElement();

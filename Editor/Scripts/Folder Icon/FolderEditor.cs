@@ -21,6 +21,28 @@ namespace Zlitz.General.ProductiveKit
                 return root;
             }
 
+            VisualElement hasNoIconConfigContent = new VisualElement();
+            hasNoIconConfigContent.style.flexGrow = 1.0f;
+            root.Add(hasNoIconConfigContent);
+
+            VisualElement hasIconConfigContent = new VisualElement();
+            hasIconConfigContent.style.flexGrow = 1.0f;
+            root.Add(hasIconConfigContent);
+
+            // No icon config yet
+
+            Button addIconConfigButton = new Button(() =>
+            {
+                hasNoIconConfigContent.style.display = DisplayStyle.None;
+                hasIconConfigContent.style.display = DisplayStyle.Flex;
+                FolderIcon.SetDefault(assetPath);
+            });
+            addIconConfigButton.text = "Add Folder Icon";
+            addIconConfigButton.SetEnabled(assetPath.StartsWith("Assets"));
+            hasNoIconConfigContent.Add(addIconConfigButton);
+
+            // Has icon config
+
             string folderIconGuid;
             (folderIconGuid, m_tintColor) = FolderIcon.GetOrDefault(assetPath);
             m_folderIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(folderIconGuid));
@@ -29,13 +51,22 @@ namespace Zlitz.General.ProductiveKit
             folderIconField.AddToClassList("unity-base-field__aligned");
             folderIconField.objectType = typeof(Texture2D);
             folderIconField.value = m_folderIcon;
-            root.Add(folderIconField);
+            hasIconConfigContent.Add(folderIconField);
 
             ColorField tintColorField = new ColorField("Tint Color");
             tintColorField.AddToClassList("unity-base-field__aligned");
             tintColorField.showAlpha = false;
             tintColorField.value = m_tintColor;
-            root.Add(tintColorField);
+            hasIconConfigContent.Add(tintColorField);
+
+            Button removeIconConfigButton = new Button(() =>
+            {
+                hasNoIconConfigContent.style.display = DisplayStyle.Flex;
+                hasIconConfigContent.style.display = DisplayStyle.None;
+                FolderIcon.Remove(assetPath);
+            });
+            removeIconConfigButton.text = "Remove Folder Icon";
+            hasIconConfigContent.Add(removeIconConfigButton);
 
             folderIconField.RegisterValueChangedCallback(e =>
             {
@@ -51,6 +82,17 @@ namespace Zlitz.General.ProductiveKit
                 m_tintColor = e.newValue;
                 FolderIcon.Set(assetPath, AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(m_folderIcon)).ToString(), m_tintColor);
             });
+
+            if (FolderIcon.TryGet(assetPath, out (string, Color) folderIconAndTint))
+            {
+                hasNoIconConfigContent.style.display = DisplayStyle.None;
+                hasIconConfigContent.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                hasNoIconConfigContent.style.display = DisplayStyle.Flex;
+                hasIconConfigContent.style.display = DisplayStyle.None;
+            }
 
             return root;
         }

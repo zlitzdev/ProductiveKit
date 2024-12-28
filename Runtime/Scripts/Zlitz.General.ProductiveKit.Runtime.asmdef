@@ -1,12 +1,8 @@
 {
-    "name": "Zlitz.General.ProductiveKit.Editor",
+    "name": "Zlitz.General.ProductiveKit.Runtime",
     "rootNamespace": "Zlitz.General.ProductiveKit",
-    "references": [
-        "GUID:8e431414db1d5bc47ba672c0614bd5bd"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "references": [],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

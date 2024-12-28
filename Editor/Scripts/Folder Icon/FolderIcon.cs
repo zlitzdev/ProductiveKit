@@ -12,17 +12,37 @@ namespace Zlitz.General.ProductiveKit
 
         private static Texture2D s_defaultFolderIcon;
 
+        private static Color s_darkThemeColor  = new Color(0.200f, 0.200f, 0.200f);
+        private static Color s_lightThemeColor = new Color(0.745f, 0.745f, 0.745f);
+
         public static Texture2D defaultFolderIcon
         {
             get
             {
                 if (s_defaultFolderIcon == null)
                 {
-                    s_defaultFolderIcon = Resources.Load<Texture2D>("Icon_Folder_Default");
+                    s_defaultFolderIcon = Resources.Load<Texture2D>("Builtin Folder Icons/Icon_Folder_Default");
                 }
 
                 return s_defaultFolderIcon;
             }
+        }
+
+        public static bool TryGet(string assetPath, out (string, Color) folderIconAndTint)
+        {
+            string folderIconMetadataPath = Path.Combine(assetPath, s_folderIconMetadataFile);
+            if (ReadFile(folderIconMetadataPath, out string folderIconMetadata))
+            {
+                FolderIconData folderIconData = JsonUtility.FromJson<FolderIconData>(folderIconMetadata);
+                if (folderIconData != null)
+                {
+                    folderIconAndTint = (folderIconData.folderIconGuid, folderIconData.tintColor);
+                    return true;
+                }
+            }
+
+            folderIconAndTint = default;
+            return false;
         }
 
         public static (string, Color) GetOrDefault(string assetPath)
@@ -56,6 +76,20 @@ namespace Zlitz.General.ProductiveKit
             }
         }
 
+        public static void SetDefault(string assetPath)
+        {
+            Set(assetPath, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(defaultFolderIcon)), Color.white);
+        }
+
+        public static void Remove(string assetPath)
+        {
+            string folderIconMetadataPath = Path.Combine(assetPath, s_folderIconMetadataFile);
+            if (!RemoveFile(folderIconMetadataPath))
+            {
+                Debug.LogWarning($"Folder icon data is not removed at {assetPath}");
+            }
+        }
+
         static FolderIcon()
         {
             EditorApplication.projectWindowItemOnGUI += OnProjectWindowItemGUI;
@@ -64,8 +98,11 @@ namespace Zlitz.General.ProductiveKit
         private static void OnProjectWindowItemGUI(string guid, Rect selectionRect)
         {
             string assetPath = AssetDatabase.GUIDToAssetPath(guid);
-            if (AssetDatabase.IsValidFolder(assetPath) && GetFolderIcon(assetPath, out Texture2D folderIcon, out Color tintColor))
+            if (AssetDatabase.IsValidFolder(assetPath) && TryGet(assetPath, out (string, Color) folderIconAndTint))
             {
+                Texture2D folderIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(folderIconAndTint.Item1));
+                Color tintColor = folderIconAndTint.Item2;
+
                 DrawFolderIcon(selectionRect, folderIcon, tintColor);
             }
         }
@@ -98,6 +135,19 @@ namespace Zlitz.General.ProductiveKit
                 File.Delete(path);
                 File.WriteAllText(path, content);
                 File.SetAttributes(path, FileAttributes.Hidden);
+                return true;
+            }
+            catch (System.Exception)
+            {
+                return false;
+            }
+        }
+
+        private static bool RemoveFile(string path)
+        {
+            try
+            {
+                File.Delete(path);
                 return true;
             }
             catch (System.Exception)
@@ -147,9 +197,12 @@ namespace Zlitz.General.ProductiveKit
 
             if (folderIcon != null)
             {
+
+                EditorGUI.DrawRect(rect, EditorGUIUtility.isProSkin ? s_darkThemeColor : s_lightThemeColor);
+
                 Color guiColor = GUI.color;
                 GUI.color = new Color(guiColor.r * tintColor.r, guiColor.g * tintColor.g, guiColor.b * tintColor.b, guiColor.a);
-                GUI.DrawTexture(new Rect(rect.x, rect.y, rect.height, rect.height), folderIcon);
+                GUI.DrawTexture(rect, folderIcon);
                 GUI.color = guiColor;
             }
         }

@@ -92,6 +92,7 @@ namespace Zlitz.General.ProductiveKit
 
         static FolderIcon()
         {
+            EditorApplication.projectWindowItemOnGUI -= OnProjectWindowItemGUI;
             EditorApplication.projectWindowItemOnGUI += OnProjectWindowItemGUI;
         }
 

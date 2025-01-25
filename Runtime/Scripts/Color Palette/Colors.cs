@@ -11,7 +11,7 @@ namespace Zlitz.General.ProductiveKit
         [RuntimeInitializeOnLoadMethod]
         public static void Initialize()
         {
-            ProductiveKitSettings.instance.colors.ClearCache();
+            ProductiveKitSettings.instance?.colors?.ClearCache();
         }
     }
 }

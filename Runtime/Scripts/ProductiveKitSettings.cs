@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 namespace Zlitz.General.ProductiveKit
@@ -15,12 +16,12 @@ namespace Zlitz.General.ProductiveKit
             {
                 if (s_instance == null)
                 {
-                    s_instance = Resources.Load<ProductiveKitSettings>("ProjectSettings_ProductiveKit");
+                    s_instance = Resources.LoadAll<ProductiveKitSettings>("").FirstOrDefault();
                 }
                 
                 if (s_instance == null)
                 {
-                    Debug.LogError("Cannot find ProjectSettings_ProductiveKit");
+                    Debug.LogError("Cannot find Productive Kit Settings");
                 }
 
                 return s_instance;

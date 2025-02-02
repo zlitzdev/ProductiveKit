@@ -8,7 +8,7 @@ namespace Zlitz.General.ProductiveKit
 
         public static Color GetColor(string name) => ProductiveKitSettings.instance.colors?.Get(name) ?? Color.black;
 
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Initialize()
         {
             ProductiveKitSettings.instance?.colors?.ClearCache();

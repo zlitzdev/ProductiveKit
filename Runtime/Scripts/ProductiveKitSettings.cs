@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Zlitz.General.ProductiveKit
 {
-    [ExecuteAlways]
     public sealed class ProductiveKitSettings : ScriptableObject
     {
         #region Singleton
@@ -17,11 +16,6 @@ namespace Zlitz.General.ProductiveKit
                 if (s_instance == null)
                 {
                     s_instance = Resources.LoadAll<ProductiveKitSettings>("").FirstOrDefault();
-                }
-                
-                if (s_instance == null)
-                {
-                    Debug.LogError("Cannot find Productive Kit Settings");
                 }
 
                 return s_instance;

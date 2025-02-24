@@ -57,11 +57,6 @@ namespace Zlitz.General.ProductiveKit
 
             public static ProductiveKitSettings RetrieveFromProjectSettings()
             {
-                if (s_instance != null)
-                {
-                    return s_instance;
-                }
-
                 ProductiveKitSettings instance = Load();
                 if (instance == null)
                 {
@@ -143,7 +138,7 @@ namespace Zlitz.General.ProductiveKit
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            Directory.CreateDirectory("Resources");
+            Directory.CreateDirectory("Assets/Resources");
 
             AssetDatabase.DeleteAsset(s_cachedPath);
 
@@ -153,8 +148,6 @@ namespace Zlitz.General.ProductiveKit
             instance.hideFlags = HideFlags.None;
 
             AssetDatabase.CreateAsset(instance, s_cachedPath);
-
-            instance.hideFlags = hideFlags;
         }
 
         public void OnPostprocessBuild(BuildReport report)
@@ -165,7 +158,7 @@ namespace Zlitz.General.ProductiveKit
 
         private static string CachedPath(Type type)
         {
-            return $"Resources/{type.FullName.Replace('.', '_')}.asset";
+            return $"Assets/Resources/{type.FullName.Replace('.', '_')}.asset";
         }
     }
 

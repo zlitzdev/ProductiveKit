@@ -178,6 +178,14 @@ namespace Zlitz.General.ProductiveKit
 
                         m_showAlpha.text    = m_showAlphaProperty.boolValue ? "RGBA" : "RGB";
                         m_showAlpha.tooltip = m_showAlphaProperty.boolValue ? "Currently showing alpha." : "Currently hiding alpha.";
+                    
+                        if (!m_showAlphaProperty.boolValue && m_colorProperty != null)
+                        {
+                            Color color = m_colorProperty.colorValue;
+                            color.a = 1.0f;
+                            m_colorProperty.colorValue = color;
+                            m_colorProperty.serializedObject.ApplyModifiedProperties();
+                        }
                     }
                 });
                 m_showAlpha.style.marginRight = -2.0f;

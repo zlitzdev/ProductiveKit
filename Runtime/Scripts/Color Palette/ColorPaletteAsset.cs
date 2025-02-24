@@ -77,7 +77,7 @@ namespace Zlitz.General.ProductiveKit
 
             public Color color => m_color;
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
 
             [SerializeField]
             private bool m_showAlpha;
@@ -85,7 +85,7 @@ namespace Zlitz.General.ProductiveKit
             [SerializeField]
             private bool m_hdr;
 
-#endif
+            #endif
         }
     }
 }

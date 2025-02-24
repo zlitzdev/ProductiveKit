@@ -141,19 +141,23 @@ namespace Zlitz.General.ProductiveKit
 
         public int callbackOrder => -200;
 
-        public void OnPostprocessBuild(BuildReport report)
+        public void OnPreprocessBuild(BuildReport report)
         {
             Directory.CreateDirectory("Resources");
 
             AssetDatabase.DeleteAsset(s_cachedPath);
 
             ProductiveKitSettings instance = ProductiveKitSettings.IO.RetrieveFromProjectSettings();
+
+            HideFlags hideFlags = instance.hideFlags;
             instance.hideFlags = HideFlags.None;
 
             AssetDatabase.CreateAsset(instance, s_cachedPath);
+
+            instance.hideFlags = hideFlags;
         }
 
-        public void OnPreprocessBuild(BuildReport report)
+        public void OnPostprocessBuild(BuildReport report)
         {
             AssetDatabase.DeleteAsset(s_cachedPath);
             AssetDatabase.Refresh();

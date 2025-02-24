@@ -5,6 +5,8 @@ using UnityEngine;
 
 #if UNITY_EDITOR
 
+using System.IO;
+
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -141,6 +143,8 @@ namespace Zlitz.General.ProductiveKit
 
         public void OnPostprocessBuild(BuildReport report)
         {
+            Directory.CreateDirectory("Resources");
+
             AssetDatabase.DeleteAsset(s_cachedPath);
 
             ProductiveKitSettings instance = ProductiveKitSettings.IO.RetrieveFromProjectSettings();

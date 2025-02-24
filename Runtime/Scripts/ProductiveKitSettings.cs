@@ -49,6 +49,14 @@ namespace Zlitz.General.ProductiveKit
 
         #if UNITY_EDITOR
 
+        private void OnValidate()
+        {
+            if (this == s_instance)
+            {
+                IO.Save(this);
+            }
+        }
+
         internal static class IO
         {
             private static readonly Type s_projectSettingsType = typeof(ProductiveKitSettings);
@@ -107,7 +115,6 @@ namespace Zlitz.General.ProductiveKit
             {
                 if (s_instance != null)
                 {
-                    Save(s_instance);
                     DestroyImmediate(s_instance);
                     s_instance = null;
                 }

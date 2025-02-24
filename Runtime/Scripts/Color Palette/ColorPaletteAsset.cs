@@ -1,5 +1,9 @@
 using System;
 
+#if !UNITY_EDITOR
+using System.Collections.Generic;
+#endif
+
 using UnityEngine;
 
 namespace Zlitz.General.ProductiveKit

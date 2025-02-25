@@ -65,6 +65,10 @@ namespace Zlitz.General.ProductiveKit
             colorsField.style.flexGrow = 1.0f;
             colorsField.BindProperty(m_colorsProperty);
             colorPaletteContainer.Add(colorsField);
+            colorsField.RegisterValueChangeCallback(e =>
+            {
+                ProductiveKitSettings.IO.Save();
+            });
 
             Button createNewPaletteButton = new Button(() =>
             {

@@ -49,19 +49,15 @@ namespace Zlitz.General.ProductiveKit
 
         #if UNITY_EDITOR
 
-        private void OnValidate()
-        {
-            if (this == s_instance)
-            {
-                IO.Save(this);
-            }
-        }
-
-        internal static class IO
+        public static class IO
         {
             private static readonly Type s_projectSettingsType = typeof(ProductiveKitSettings);
             private static readonly string s_formattedName = FormatName(s_projectSettingsType);
             private static readonly string s_savePath = SavePath(s_projectSettingsType);
+
+            private static ProductiveKitSettings s_loaded;
+
+            public static ProductiveKitSettings loaded => s_loaded;
 
             public static ProductiveKitSettings RetrieveFromProjectSettings()
             {
@@ -74,21 +70,26 @@ namespace Zlitz.General.ProductiveKit
                 return instance;
             }
 
-            public static void Save(ProductiveKitSettings instance)
+            public static void Save()
             {
+                ProductiveKitSettings instance = Retrieve();
                 if (instance == null)
                 {
                     return;
                 }
-                instance.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontUnloadUnusedAsset;
                 InternalEditorUtility.SaveToSerializedFileAndForget(new UnityEngine.Object[] { instance }, s_savePath, true);
             }
 
             private static ProductiveKitSettings Load()
             {
-                ProductiveKitSettings instance = InternalEditorUtility.LoadSerializedFileAndForget(s_savePath).FirstOrDefault() as ProductiveKitSettings;
+                if (s_loaded != null)
+                {
+                    return s_loaded;
+                }
+                ProductiveKitSettings instance = InternalEditorUtility.LoadSerializedFileAndForget(s_savePath).OfType<ProductiveKitSettings>().FirstOrDefault();
                 if (instance != null)
                 {
+                    s_loaded = instance;
                     instance.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontUnloadUnusedAsset;
                 }
 
@@ -99,25 +100,12 @@ namespace Zlitz.General.ProductiveKit
             {
                 ProductiveKitSettings newInstance = CreateInstance<ProductiveKitSettings>();
                 newInstance.name = s_formattedName;
+                newInstance.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontUnloadUnusedAsset;
 
-                Save(newInstance);
+                s_loaded = newInstance;
+                Save();
 
                 return newInstance;
-            }
-
-            static IO()
-            {
-                AssemblyReloadEvents.beforeAssemblyReload -= BeforeAssemblyReload;
-                AssemblyReloadEvents.beforeAssemblyReload += BeforeAssemblyReload;
-            }
-
-            private static void BeforeAssemblyReload()
-            {
-                if (s_instance != null)
-                {
-                    DestroyImmediate(s_instance);
-                    s_instance = null;
-                }
             }
 
             private static string SavePath(Type type)
@@ -128,6 +116,21 @@ namespace Zlitz.General.ProductiveKit
             private static string FormatName(Type type)
             {
                 return type.FullName.Replace('.', '_');
+            }
+        
+            static IO()
+            {
+                s_loaded = null;
+                AssemblyReloadEvents.beforeAssemblyReload += BeforeAssemblyReload;
+            }
+
+            private static void BeforeAssemblyReload()
+            {
+                if (s_loaded != null)
+                {
+                    DestroyImmediate(s_loaded);
+                    s_loaded = null;
+                }
             }
         }
 

@@ -70,13 +70,13 @@ namespace Zlitz.General.ProductiveKit
                 return instance;
             }
 
-            public static void Save()
+            public static void Save(ProductiveKitSettings instance)
             {
-                ProductiveKitSettings instance = Retrieve();
                 if (instance == null)
                 {
                     return;
                 }
+                s_loaded = instance;
                 InternalEditorUtility.SaveToSerializedFileAndForget(new UnityEngine.Object[] { instance }, s_savePath, true);
             }
 
@@ -103,7 +103,7 @@ namespace Zlitz.General.ProductiveKit
                 newInstance.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontUnloadUnusedAsset;
 
                 s_loaded = newInstance;
-                Save();
+                Save(newInstance);
 
                 return newInstance;
             }

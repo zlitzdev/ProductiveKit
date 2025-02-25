@@ -17,9 +17,10 @@ namespace Zlitz.General.ProductiveKit
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            if (m_serializedSettings == null && ProductiveKitSettings.instance != null)
+            ProductiveKitSettings settings = ProductiveKitSettings.IO.RetrieveFromProjectSettings();
+            if (m_serializedSettings == null && settings != null)
             {
-                m_serializedSettings = new SerializedObject(ProductiveKitSettings.instance);
+                m_serializedSettings = new SerializedObject(settings);
 
                 m_colorsProperty = m_serializedSettings.FindProperty("m_colors");
             }
@@ -67,7 +68,7 @@ namespace Zlitz.General.ProductiveKit
             colorPaletteContainer.Add(colorsField);
             colorsField.RegisterValueChangeCallback(e =>
             {
-                ProductiveKitSettings.IO.Save();
+                ProductiveKitSettings.IO.Save(settings);
             });
 
             Button createNewPaletteButton = new Button(() =>
@@ -138,15 +139,6 @@ namespace Zlitz.General.ProductiveKit
         public static SettingsProvider CreateProductiveKitSettingsProvider()
         {
             return new ProductiveKitSettingsProvider("Project/Zlitz/Productive Kit", SettingsScope.Project);
-        }
-    }
-
-    [InitializeOnLoad]
-    internal static class ProductiveKitSettingsInitializer
-    {
-        static ProductiveKitSettingsInitializer()
-        {
-            ProductiveKitSettings instance = ProductiveKitSettings.instance;
         }
     }
 }

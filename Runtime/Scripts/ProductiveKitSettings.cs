@@ -128,7 +128,7 @@ namespace Zlitz.General.ProductiveKit
             {
                 if (s_loaded != null)
                 {
-                    DestroyImmediate(s_loaded);
+                    DestroyImmediate(s_loaded, true);
                     s_loaded = null;
                 }
             }
